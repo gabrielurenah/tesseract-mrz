@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { createWorker } from "tesseract.js";
 import "./App.css";
-import myId from "./mrz_5.jpg";
+import myId from "./mrz_2.jpg";
 import mrz from "mrz";
 
 function App() {
