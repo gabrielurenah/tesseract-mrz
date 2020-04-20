@@ -25,3 +25,5 @@ yarn-error.log*
 .vscode
 src/mrz_*.jpg
 src/mrz_*.png
+
+package-lock.json
