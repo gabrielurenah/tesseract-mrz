@@ -1,18 +1,30 @@
-import React, { useEffect, useState } from "react";
-import { createWorker } from "tesseract.js";
-import "./App.css";
+import React, { useEffect, useState, useRef } from "react";
 import mrz from "mrz";
+import { createWorker } from "tesseract.js";
+
+import UserInfo from "./components/UserInfo";
+import useUserMedia from "./hooks/use-user-media";
+
+import "./App.css";
 
 function App() {
   const [image, setImage] = useState({ MRZ: "" });
   const [user, setUser] = useState({});
+  const [ocr, setOcr] = useState("Recognizing...");
+  const videoRef = useRef();
+
   const worker = createWorker();
 
-  const onChange = (event) => {
-    setImage({
-      MRZ: event.target.files[0],
-    });
-  };
+  const mediaStream = useUserMedia({
+    audio: false,
+    video: { facingMode: "environment" },
+  });
+
+  useEffect(() => {
+    if (mediaStream && videoRef.current && !videoRef.current.srcObject) {
+      videoRef.current.srcObject = mediaStream;
+    }
+  }, [mediaStream]);
 
   const doOCR = async () => {
     await worker.load();
@@ -23,16 +35,17 @@ function App() {
       const {
         data: { text },
       } = await worker.recognize(image.MRZ);
+      console.log("text", text);
 
       const idMRZ = text.split("\n").filter((t) => t !== "");
+      console.log("cedula", idMRZ);
       const parsedMRZ = mrz.parse(idMRZ);
+      console.log("parsed", parsedMRZ);
 
       setUser(parsedMRZ.fields);
       setOcr("");
     }
   };
-
-  const [ocr, setOcr] = useState("Recognizing...");
 
   useEffect(() => {
     if (Object.keys(user).length === 0) {
@@ -40,20 +53,15 @@ function App() {
     }
   });
 
-  //   documentCode: "ID"
-  // documentNumber: "40226366199"
-  // sex: "male"
-  // lastName: "URENA HERNANDEZ"
-  // firstName: "GABRIEL ARTUR"
   return (
     <div className="App">
       <h2>Take a picture of the MRZ</h2>
-      <input type="file" accept="image/*" onChange={onChange} capture />
+
+      <video ref={videoRef} width="500" autoPlay />
+
       {image.MRZ ? <p>{ocr}</p> : <div />}
-      <span style={{ fontSize: 25, marginTop: 16 }}>User info</span>🔥
-      <p>Cedula: {user.documentNumber}</p>
-      <p>Name: {user.firstName}</p>
-      <p>LastName: {user.lastName}</p>
+
+      <UserInfo />
     </div>
   );
 }
